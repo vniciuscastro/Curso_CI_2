@@ -1,1 +1,46 @@
+name: Docker
+
+on:
+  workflow_call:
+
+jobs:
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3  
+
+    - name: setup Docker Build
+      uses: docker/setup-buildx-action@v3.11.1
+
+    - name: Docker Login
+      uses: docker/login-action@v3.5.0
+      with:
+        username: vniciuscastro
+        password:
+      
+    - name: Build-DB
+      run: docker compose build
+      
+    - name: Create-DB
+      run: docker compose up -d
+
+    - name: Test
+      run: go test -v main_test.go 
+      
+  build:
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'ubuntu-24.04']
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: go build -v main.go
+
+  docker:
+    needs: build
+    uses: ./.github/workflows/Docker.yml
+
 
